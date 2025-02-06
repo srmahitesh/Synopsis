@@ -1,0 +1,36 @@
+<%- include('Header') %>
+
+<% if(locals.user){ %>
+  <h2>Hello, <%= user.name %></h2>
+<% } %>
+
+<div class="container text-center mt-5">
+  <div class="row">
+    <div class="col-md-6">
+      <!-- Mark Attendance Button -->
+      <a href="/mark_attendance" class="btn btn-primary btn-lg d-block py-4">
+        <img src="https://raw.githubusercontent.com/srmahitesh/storage/refs/heads/main/correctAtt.png" 
+             alt="Mark Attendance Icon" 
+             class="mb-2" 
+             style="width: 100px; height: 100px;">
+        <br>Mark Attendance
+      </a>
+    </div>
+    <div class="col-md-6">
+
+
+
+      
+      <!-- Correct Old Attendance Button -->
+      <a href="/attendanceCorrection" class="btn btn-secondary btn-lg d-block py-4">
+        <img src="https://raw.githubusercontent.com/srmahitesh/storage/refs/heads/main/correctAttend.png" 
+             alt="Correct Attendance Icon" 
+             class="mb-2" 
+             style="width: 100px; height: 100px;">
+        <br>Correct Old Attendance
+      </a>
+    </div>
+  </div>
+</div>
+
+<%- include('Footer') %>

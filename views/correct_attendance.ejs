@@ -1,0 +1,169 @@
+<%- include('Header.ejs') %>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #343a40;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h2, h1 {
+    text-align: center;
+    color: #495057;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 20px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+
+  input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+
+  input:focus, select:focus, button:focus {
+    border-color: #80bdff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(128, 189, 255, 0.5);
+  }
+
+  button {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  #attendance-details {
+    border-top: 1px solid #dee2e6;
+    padding-top: 20px;
+  }
+
+  #attendance-info {
+    margin-bottom: 15px;
+    line-height: 1.5;
+  }
+
+  strong {
+    color: #495057;
+  }
+
+  .alert {
+    color: #dc3545;
+    text-align: center;
+    font-weight: bold;
+  }
+</style>
+
+<div class="container">
+  <h1>Correct Attendance:</h1>
+
+  <div>
+    <label for="att_id">Enter Attendance ID:</label>
+    <input type="number" id="att_id" placeholder="Attendance ID" required>
+    <button onclick="fetchAttendance()">Submit</button>
+  </div>
+
+  <!-- Display fetched attendance -->
+  <div id="attendance-details" style="display: none;">
+    <h3>Attendance Details:</h3>
+    <p id="attendance-info"></p>
+
+    <div>
+      <label for="status">Update Status:</label>
+      <select id="status">
+        <option value="present">Present</option>
+        <option value="absent">Absent</option>
+      </select>
+    </div>
+
+    <button onclick="updateAttendance()">Update Attendance</button>
+  </div>
+</div>
+
+<script>
+  async function fetchAttendance() {
+    const attId = document.getElementById('att_id').value;
+
+    if (!attId) {
+      alert("Please enter an attendance ID.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/getAttendanceById?id=${attId}`);
+      const data = await response.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      // Populate the attendance details
+      const attendanceInfo = `
+        <strong>Subject:</strong> ${data.subject_name}<br>
+        <strong>Roll No:</strong> ${data.roll_no}<br>
+        <strong>Status:</strong> ${data.status}<br>
+        <strong>Faculty:</strong> ${data.faculty_name}
+      `;
+      document.getElementById('attendance-info').innerHTML = attendanceInfo;
+
+      // Show the details section
+      document.getElementById('attendance-details').style.display = 'block';
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+      alert("Failed to fetch attendance. Please try again.");
+    }
+  }
+
+  async function updateAttendance() {
+    const attId = document.getElementById('att_id').value;
+    const status = document.getElementById('status').value;
+
+    try {
+      const response = await fetch(`/updateAttendance`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ att_id: attId, status }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Attendance updated successfully!");
+        location.reload();
+      } else {
+        alert(result.error || "Failed to update attendance.");
+      }
+    } catch (error) {
+      console.error("Error updating attendance:", error);
+      alert("Failed to update attendance. Please try again.");
+    }
+  }
+</script>
+
+<%- include('Footer.ejs') %>

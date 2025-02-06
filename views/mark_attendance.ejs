@@ -1,0 +1,215 @@
+<%- include('Header') %>
+
+<% 
+// Define available streams
+let streams = [
+  { course_name: "CSE", course_id: 1 },
+  { course_name: "ME", course_id: 2 },
+  { course_name: "ECE", course_id: 3 }
+]; 
+%>
+
+
+<h1>Mark Attendance:</h1>
+
+<div class="container">
+  <!-- Stream Dropdown -->
+  <div class="mb-3">
+    <label for="Stream" class="form-label">Select Stream:</label>
+    <select name="Stream" id="Stream" class="form-select" onchange="fetchStudents(); updateSubjects();">
+      <option disabled selected value="">Select Stream</option>
+      <% streams.forEach(stream => { %>
+        <option value="<%= stream.course_id %>"><%= stream.course_name %></option>
+      <% }); %>
+    </select>
+  </div>
+
+  <!-- Semester Dropdown -->
+  <div class="mb-3">
+    <label for="Sem" class="form-label">Select Semester:</label>
+    <select name="Sem" id="Sem" class="form-select" onchange="fetchStudents(); updateSubjects();">
+      <option disabled selected value="">Select Semester</option>
+      <% for (let i = 1; i <= 6; i++) { %>
+        <option value="<%= i %>"><%= i %></option>
+      <% } %>
+    </select>
+  </div>
+
+  <!-- Subject Dropdown -->
+  <label for="subjects">Subjects:</label>
+  <select id="subjects" name="subjects" class="form-select">
+    <option value="">-- Select Subject --</option>
+  </select>
+
+  <!-- Display Students -->
+  <div id="student-list" class="mt-4">
+    <!-- Dynamically populated list of students -->
+  </div>
+
+  <!-- Submit Button -->
+  <button id="submit-btn" class="btn btn-primary mt-3" onclick="submitAttendance(event)">Submit Attendance</button>
+</div>
+
+<script>
+  async function updateSubjects() {
+    const stream = document.getElementById('Stream').value;
+    const sem = document.getElementById('Sem').value;
+
+    if (stream && sem) {
+      try {
+        const response = await fetch(`/getSubjects?stream=${stream}&sem=${sem}`);
+        const data = await response.json();
+
+        const subjectDropdown = document.getElementById('subjects');
+        subjectDropdown.innerHTML = ''; // Clear existing options
+
+        if (data.subjects && data.subjects.length > 0) {
+          data.subjects.forEach((subject) => {
+            const option = document.createElement('option');
+            option.value = subject.name; // Ensure this is the correct property
+            option.textContent = `(${subject.sub_id}) ${subject.name}`;
+            subjectDropdown.appendChild(option);
+          });
+        } else {
+          subjectDropdown.innerHTML = '<option value="">No subjects found</option>';
+        }
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+        alert('Failed to fetch subjects. Please try again.');
+      }
+    }
+  }
+
+  function fetchStudents() {
+    const stream = document.getElementById("Stream").value;
+    const semester = document.getElementById("Sem").value;
+
+    if (stream && semester) {
+      fetch(`/getStudents?stream=${stream}&sem=${semester}`)
+        .then((response) => response.json())
+        .then((students) => {
+          const studentListDiv = document.getElementById("student-list");
+          studentListDiv.innerHTML = ""; // Clear previous content
+
+          if (students.length > 0) {
+            students.forEach((student) => {
+              const studentDiv = document.createElement("div");
+              studentDiv.classList.add("student-entry", "d-flex", "justify-content-between", "mb-3");
+
+              studentDiv.innerHTML = `
+                <div>
+                  <strong>Roll No: ${student.roll_no}</strong> - ${student.first_name} ${student.last_name}
+                </div>
+                <div>
+                  <button class="btn btn-light attendance-btn" onclick="markAttendance(this, 'present')">Present</button>
+                  <button class="btn btn-light attendance-btn" onclick="markAttendance(this, 'absent')">Absent</button>
+                </div>
+              `;
+              studentListDiv.appendChild(studentDiv);
+            });
+          } else {
+            studentListDiv.innerHTML = "<p>No students found for the selected stream and semester.</p>";
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching students:", error);
+          alert("Failed to fetch students. Please try again.");
+        });
+    } else {
+      document.getElementById("student-list").innerHTML = "";
+    }
+  }
+
+  function markAttendance(button, status) {
+    const studentDiv = button.closest('.student-entry');
+    const buttons = studentDiv.querySelectorAll('.attendance-btn');
+
+    // Reset button colors
+    buttons.forEach(btn => {
+      btn.classList.remove('btn-success', 'btn-danger');
+      btn.classList.add('btn-light');
+    });
+
+    // Set the clicked button to the appropriate color
+    if (status === 'present') {
+      button.classList.remove('btn-light');
+      button.classList.add('btn-success');
+    } else {
+      button.classList.remove('btn-light');
+      button.classList.add('btn-danger');
+    }
+  }
+
+  function submitAttendance(event) {
+    event.preventDefault(); // Prevent default form submission
+    const studentsDiv = document.getElementById("student-list").children;
+    const attendanceData = [];
+    const subName = document.querySelector("#subjects").value;
+
+    if (!subName) {
+      alert("Please select a subject before submitting attendance.");
+      return;
+    }
+
+    Array.from(studentsDiv).forEach((studentDiv) => {
+      const rollNo = studentDiv.querySelector("strong").textContent.match(/\d+/)[0];
+      const presentButton = studentDiv.querySelector("button.btn-success");
+      const absentButton = studentDiv.querySelector("button.btn-danger");
+
+      if (presentButton) {
+        attendanceData.push({
+          roll_no: rollNo,
+          status: "present",
+          sub_name: subName,
+          faculty_id: <%= user.id %>, // Ensure this is correctly embedded
+          faculty_name: "<%= user.name %>" // Ensure this is correctly embedded
+        });
+      } else if (absentButton) {
+        attendanceData.push({
+          roll_no: rollNo,
+          status: "absent",
+          sub_name: subName,
+          faculty_id: <%= user.id %>, // Ensure this is correctly embedded
+          faculty_name: "<%= user.name %>" // Ensure this is correctly embedded
+        });
+      } else {
+        alert(`Please mark attendance for Roll No: ${rollNo}`);
+        return; // Exit if attendance is not marked for this student
+      }
+    });
+
+    if (attendanceData.length === 0) {
+      alert("Please mark attendance for at least one student.");
+      return;
+    }
+
+    console.log("Attendance data to be submitted:", attendanceData); // Log the data being sent
+
+    const submitButton = document.getElementById("submit-btn");
+    submitButton.disabled = true;
+
+    fetch("/submitAttendance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(attendanceData),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        submitButton.disabled = false;
+
+        if (result.success) {
+          alert("Attendance submitted successfully!");
+          location.reload(); // Refresh page
+        } else {
+          alert("Failed to submit attendance. Please try again.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error submitting attendance:", error);
+        alert("Error submitting attendance. Please try again.");
+        submitButton.disabled = false;
+      });
+  }
+</script>
+
+<%- include('Footer') %>

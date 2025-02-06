@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Form</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Header Section */
+    .header {
+      background-color: #007bff;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    h1 {
+      color: #007bff;
+    }
+
+    /* Form Styling */
+    .form-container {
+      max-width: 700px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+      color: #333;
+    }
+
+    .form-container input[type="text"],
+    .form-container input[type="date"],
+    .form-container input[type="tel"],
+    .form-container input[type="email"],
+    .form-container input[type="number"],
+    .form-container select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    .form-container input[type="submit"] {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .form-container input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    /* General Styling */
+    input, select {
+      margin: 8px 0;
+    }
+
+    /* Footer Section */
+    .footer {
+      background-color: #343a40;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+
+  <%- include('Header') %>
+
+  <div class="form-container">
+    <h1>Register Student</h1>
+
+    <form action="/submit" method="post">
+      <label for="f_name">First Name:</label>
+      <input type="text" name="f_name" maxlength="30" required>
+
+      <label for="l_name">Last Name:</label>
+      <input type="text" name="l_name" maxlength="30">
+
+      <label for="father_name">Father Name:</label>
+      <input type="text" name="father_name" maxlength="60" required>
+
+      <label for="mother_name">Mother Name:</label>
+      <input type="text" name="mother_name" maxlength="60" required>
+
+      <label for="dob">Birth Date:</label>
+      <input type="date" name="dob" required>
+
+      <label for="gender">Gender:</label>
+      <select name="gender" required>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Others">Others</option>
+      </select>
+
+      <label for="aadhar_no">Aadhar No.:</label>
+      <input type="text" name="aadhar_no" maxlength="12" required>
+
+      <label for="contact_no">Student Contact Number:</label>
+      <input type="tel" name="contact_no" required>
+
+      <label for="email_add">Student Email Address:</label>
+      <input type="email" name="email_add" required>
+
+      <label for="course">Course:</label>
+      <select name="course">
+        <% for(let i = 0; i < courses.length; i++){ %>
+          <option value="<%=courses[i].course_id%>"> <%= courses[i].course_name%> - <%=courses[i].duration%> Years </option>
+        <%}%>
+      </select>
+
+      <label for="sem">Current Semester:</label>
+      <select name="sem">
+        <% for(let i = 1; i <= 6; i++){ %>
+          <option value="<%=i%>"> <%=i%></option>
+        <%}%>
+      </select>
+
+      <label for="house_no">House No.:</label>
+      <input type="text" name="house_no" maxlength="25" required>
+
+      <label for="street_add">Street/Village:</label>
+      <input type="text" name="street_add" maxlength="120" required>
+
+      <label for="city">City:</label>
+      <input type="text" name="city" required>
+
+      <label for="distt">Distt:</label>
+      <input type="text" name="distt" required>
+
+      <label for="state">State:</label>
+      <input type="text" name="state" required>
+
+      <label for="country">Country:</label>
+      <input type="text" name="country" required>
+
+      <label for="pin_code">Zip/Pin Code:</label>
+      <input type="number" name="pin_code" maxlength="6" required>
+
+      <input type="submit" value="Submit">
+    </form>
+  </div>
+
+  <%-include('Footer') %>
+
+</body>
+</html>

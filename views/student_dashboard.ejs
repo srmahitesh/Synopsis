@@ -1,0 +1,178 @@
+<%- include('Header') %>
+
+<% if (locals.user) { %>
+  <h2>Hello, <%= user.first_name %> <%= user.last_name %></h2>
+<% } %>
+
+<h2>Check Attendance:</h2>
+
+<label for="subject">Subject:</label>
+<select name="subject" id="subject" onchange="LoadAttendance();">
+  <option value="" selected hidden>Please select a subject</option>
+</select>
+
+<div id="attendance-table" style="margin-top: 20px; display: none;">
+  <table border="1" style="width: 100%; text-align: center; border-collapse: collapse;">
+    <thead>
+      <tr>
+        <th>Attendance ID</th>
+        <th>Date</th>
+        <th>Marked By</th>
+        <th>Subject</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="attendance-list">
+      <!-- Rows will be dynamically added -->
+    </tbody>
+  </table>
+
+  <div id="attendance-summary" style="margin-top: 20px; font-weight: bold; text-align: right;"></div>
+</div>
+
+<style>
+  h2 {
+    color: #4CAF50;
+    text-align: center;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  select {
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 16px;
+  }
+
+  table {
+    width: 100%;
+    border: 1px solid #ddd;
+    margin-top: 20px;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+  }
+
+  th {
+    background-color: #f4f4f4;
+  }
+
+  td {
+    text-align: center;
+  }
+
+  td[style*="color: green"] {
+    font-weight: bold;
+  }
+
+  td[style*="color: blue"] {
+    font-weight: bold;
+  }
+
+  #attendance-summary {
+    font-size: 18px;
+    color: #333;
+  }
+</style>
+
+<script>
+  // Function to load subjects dynamically
+  async function LoadSubjects() {
+  const c_id = <%= user.course_id %>; // Course ID
+  const s = <%= user.sem %>; // Semester
+
+  try {
+    const response = await fetch(`/getSubjects?stream=${c_id}&sem=${s}`);
+    const data = await response.json();
+
+    const subjectDropdown = document.getElementById('subject');
+    subjectDropdown.innerHTML = `
+      <option value="" selected hidden>Please select a subject</option>
+      <option value="">All</option>
+    `; // Placeholder and "All" option
+
+    if (data.subjects && data.subjects.length > 0) {
+      data.subjects.forEach((subject) => {
+        const option = document.createElement('option');
+        option.value = subject.name; // Adjust property if needed
+        option.textContent = `(${subject.sub_id}) ${subject.name}`;
+        subjectDropdown.appendChild(option);
+      });
+    } else {
+      subjectDropdown.innerHTML = `
+        <option value="" selected hidden>Please select a subject</option>
+        <option value="">All</option>
+        <option value="">No subjects found</option>
+      `;
+    }
+  } catch (error) {
+    console.error('Error fetching subjects:', error);
+    alert('Failed to fetch subjects. Please try again.');
+  }
+}
+
+
+
+  // Function to load attendance dynamically
+  async function LoadAttendance() {
+  const rollNo = <%= user.roll_no %>;
+  const subject = document.querySelector('#subject').value;
+
+  // Encode the subject name to handle special characters
+  const encodedSubject = encodeURIComponent(subject);
+  console.log(subject); // For debugging
+  console.log(`Encoded: ${encodedSubject}`); // See the encoded value
+
+  try {
+    const response = await fetch(`/getAttendance?roll_no=${rollNo}&subject=${encodedSubject}`);
+    const data = await response.json();
+
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+
+    // Populate the attendance table
+    const tableBody = document.getElementById('attendance-list');
+    tableBody.innerHTML = ''; // Clear existing rows
+
+    let total = 0;
+    let presentCount = 0;
+
+    data.attendance.forEach((record) => {
+      total++;
+      if (record.status === 'present') presentCount++;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${record.attend_id}</td>
+        <td>${new Date(record.att_date).toLocaleDateString()}</td>
+        <td>${record.faculty_name}</td>
+        <td>${record.subject_name}</td>
+        <td style="color: ${record.status === 'present' ? 'green' : 'blue'};">${record.status}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+
+    // Display the summary
+    const percentage = ((presentCount / total) * 100).toFixed(2);
+    document.getElementById('attendance-summary').textContent = `Total Percentage: ${percentage}%`;
+
+    // Show the table
+    document.getElementById('attendance-table').style.display = 'block';
+  } catch (error) {
+    console.error('Error fetching attendance:', error);
+    alert('Failed to fetch attendance. Please try again.');
+  }
+}
+
+
+  // Call the function to load subjects when the page loads
+  document.addEventListener('DOMContentLoaded', LoadSubjects);
+</script>
+
+<%- include('Footer') %>
